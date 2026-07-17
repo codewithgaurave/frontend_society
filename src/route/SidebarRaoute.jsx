@@ -9,6 +9,7 @@ import {
   FaCalendarAlt,
   FaObjectGroup, // 👈 NEW icon for Main Categories
   FaCreditCard, // For Subscriptions
+  FaListAlt, // For Plans
 } from "react-icons/fa";
 
 const SocietyDashboard = lazy(() => import("../pages/SocietyDashboard"));
@@ -38,6 +39,10 @@ const MainCategoryPage = lazy(() =>
 
 const SubscriptionManagementPage = lazy(() =>
   import("../pages/SubscriptionManagementPage")
+);
+
+const PlanManagementPage = lazy(() =>
+  import("../pages/PlanManagementPage")
 );
 
 const routes = [
@@ -102,6 +107,12 @@ const routes = [
     component: SubscriptionManagementPage,
     name: "Subscriptions",
     icon: FaCreditCard,
+  },
+  {
+    path: "/plans",
+    component: PlanManagementPage,
+    name: "Subscription Plans",
+    icon: FaListAlt,
   },
 ];
 
