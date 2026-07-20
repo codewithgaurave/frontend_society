@@ -191,6 +191,39 @@ export default function SocietyDashboard() {
       (w) => String(w.status || "").toUpperCase() === "OFF_DUTY"
     ).length;
 
+    const now = new Date();
+    
+    // Start of today
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Start of this week (assuming Monday is the first day of the week)
+    const currentDay = startOfToday.getDay();
+    const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
+    const startOfThisWeek = new Date(startOfToday);
+    startOfThisWeek.setDate(startOfToday.getDate() - distanceToMonday);
+
+    // Start of last week
+    const startOfLastWeek = new Date(startOfThisWeek);
+    startOfLastWeek.setDate(startOfThisWeek.getDate() - 7);
+
+    // Start of this month
+    const startOfThisMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    // Start of last month
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    const membersThisWeek = members.filter(m => new Date(m.createdAt) >= startOfThisWeek).length;
+    const membersLastWeek = members.filter(m => {
+      const d = new Date(m.createdAt);
+      return d >= startOfLastWeek && d < startOfThisWeek;
+    }).length;
+
+    const workersThisWeek = workers.filter(w => new Date(w.createdAt) >= startOfThisWeek).length;
+    const workersLastWeek = workers.filter(w => {
+      const d = new Date(w.createdAt);
+      return d >= startOfLastWeek && d < startOfThisWeek;
+    }).length;
+
     return {
       totalMembers,
       activeMembers,
@@ -198,6 +231,10 @@ export default function SocietyDashboard() {
       totalWorkers,
       onDutyWorkers,
       offDutyWorkers,
+      membersThisWeek,
+      membersLastWeek,
+      workersThisWeek,
+      workersLastWeek
     };
   }, [members, workers]);
 
@@ -369,6 +406,14 @@ export default function SocietyDashboard() {
             >
               {summary.totalMembers}
             </p>
+            <div className="flex flex-col mt-1">
+              <span className="text-[10px] font-medium text-green-600">
+                +{summary.membersThisWeek} added this week
+              </span>
+              <span className="text-[10px] opacity-60">
+                {summary.membersLastWeek} added last week
+              </span>
+            </div>
           </div>
         </div>
 
@@ -447,6 +492,14 @@ export default function SocietyDashboard() {
             >
               {summary.totalWorkers}
             </p>
+            <div className="flex flex-col mt-1">
+              <span className="text-[10px] font-medium text-green-600">
+                +{summary.workersThisWeek} added this week
+              </span>
+              <span className="text-[10px] opacity-60">
+                {summary.workersLastWeek} added last week
+              </span>
+            </div>
           </div>
         </div>
 

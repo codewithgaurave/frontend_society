@@ -205,6 +205,38 @@ export default function UserManagementPage() {
   }, [filteredUsers, currentPage]);
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
 
+  // ======== SUMMARY STATS =========
+  const usersStats = useMemo(() => {
+    const totalUsers = users.length;
+    
+    const now = new Date();
+    
+    // Start of today
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Start of this week
+    const currentDay = startOfToday.getDay();
+    const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
+    const startOfThisWeek = new Date(startOfToday);
+    startOfThisWeek.setDate(startOfToday.getDate() - distanceToMonday);
+
+    // Start of last week
+    const startOfLastWeek = new Date(startOfThisWeek);
+    startOfLastWeek.setDate(startOfThisWeek.getDate() - 7);
+
+    const usersThisWeek = users.filter(u => new Date(u.createdAt) >= startOfThisWeek).length;
+    const usersLastWeek = users.filter(u => {
+      const d = new Date(u.createdAt);
+      return d >= startOfLastWeek && d < startOfThisWeek;
+    }).length;
+
+    return {
+      totalUsers,
+      usersThisWeek,
+      usersLastWeek,
+    };
+  }, [users]);
+
   // ===== FORM HANDLERS =====
   const resetForm = () => {
     setForm(emptyForm);
@@ -532,6 +564,43 @@ export default function UserManagementPage() {
             <FaPlus className="text-xs" />
             Add User
           </button>
+        </div>
+      </div>
+
+      {/* Summary cards */}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div
+          className="rounded-2xl border p-4 flex items-center gap-3 shadow-sm"
+          style={{
+            backgroundColor: themeColors.surface,
+            borderColor: themeColors.border,
+          }}
+        >
+          <div className="p-3 rounded-xl" style={{ backgroundColor: "#00000010" }}>
+            <FaUsers className="text-lg" />
+          </div>
+          <div>
+            <p
+              className="text-xs uppercase font-semibold opacity-70"
+              style={{ color: themeColors.text }}
+            >
+              Total Registered Users
+            </p>
+            <p
+              className="text-2xl font-bold leading-tight"
+              style={{ color: themeColors.text }}
+            >
+              {usersStats.totalUsers}
+            </p>
+            <div className="flex flex-col mt-1">
+              <span className="text-[10px] font-medium text-green-600">
+                +{usersStats.usersThisWeek} added this week
+              </span>
+              <span className="text-[10px] opacity-60">
+                {usersStats.usersLastWeek} added last week
+              </span>
+            </div>
+          </div>
         </div>
       </div>
 
