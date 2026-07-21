@@ -10,6 +10,8 @@ import {
   FaObjectGroup, // 👈 NEW icon for Main Categories
   FaCreditCard, // For Subscriptions
   FaListAlt, // For Plans
+  FaUserTie, // For Employees
+  FaUserCheck, // For Employee Onboardings
 } from "react-icons/fa";
 
 const SocietyDashboard = lazy(() => import("../pages/SocietyDashboard"));
@@ -18,6 +20,12 @@ const ServiceCategoryPage = lazy(() =>
 );
 const UserManagementPage = lazy(() =>
   import("../pages/UserManagementPage")
+);
+const EmployeeManagementPage = lazy(() =>
+  import("../pages/EmployeeManagementPage")
+);
+const EmployeeWiseUsersPage = lazy(() =>
+  import("../pages/EmployeeWiseUsersPage")
 );
 const TatkalServicePage = lazy(() =>
   import("../pages/TatkalServicePage")
@@ -72,6 +80,18 @@ const routes = [
     component: UserManagementPage,
     name: "Users",
     icon: FaUsers,
+  },
+  {
+    path: "/employees",
+    component: EmployeeManagementPage,
+    name: "Create & Manage Employee",
+    icon: FaUserTie,
+  },
+  {
+    path: "/employee-onboardings",
+    component: EmployeeWiseUsersPage,
+    name: "Employee-Wise Users",
+    icon: FaUserCheck,
   },
 
   // ⭐ Tatkal Services Page

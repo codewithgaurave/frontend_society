@@ -740,6 +740,11 @@ export default function UserManagementPage() {
                           ID: {u.registrationID}
                         </span>
                       )}
+                      {(u.empCode || u.onboardedBy?.empCode) && (
+                        <span className="inline-block mt-0.5 text-[10px] font-mono font-semibold bg-purple-50 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200">
+                          Emp: {u.empCode || u.onboardedBy?.empCode} {u.onboardedBy?.name ? `(${u.onboardedBy.name})` : ""}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td
