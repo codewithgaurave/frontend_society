@@ -19,15 +19,18 @@ const PlanManagementPage = () => {
     price: 0,
     durationDays: 30,
     features: "",
-    needsPerMonth: -1,
-    templatesAllowed: 0,
+    // Worker Limits
+    maxAppliesPerMonth: 0,
     tatkalEnabled: false,
+    templatesAllowed: 0,
     priorityListing: false,
     verifiedBadge: false,
-    featuredInTatkal: false,
-    analyticsEnabled: false,
-    whatsappLeads: false,
+    canViewDirectContact: false,
+    // Member Limits
+    maxNeedsPerMonth: 3,
+    maxApplicationsPerNeed: 5,
     directWorkerContact: false,
+    featuredNeed: false,
     isActive: true,
   });
 
@@ -57,15 +60,18 @@ const PlanManagementPage = () => {
         price: plan.price,
         durationDays: plan.durationDays,
         features: plan.features.join(", "),
-        needsPerMonth: plan.limits?.needsPerMonth ?? -1,
-        templatesAllowed: plan.limits?.templatesAllowed ?? 0,
+        // Worker Limits
+        maxAppliesPerMonth: plan.limits?.maxAppliesPerMonth ?? 0,
         tatkalEnabled: plan.limits?.tatkalEnabled ?? false,
+        templatesAllowed: plan.limits?.templatesAllowed ?? 0,
         priorityListing: plan.limits?.priorityListing ?? false,
         verifiedBadge: plan.limits?.verifiedBadge ?? false,
-        featuredInTatkal: plan.limits?.featuredInTatkal ?? false,
-        analyticsEnabled: plan.limits?.analyticsEnabled ?? false,
-        whatsappLeads: plan.limits?.whatsappLeads ?? false,
+        canViewDirectContact: plan.limits?.canViewDirectContact ?? false,
+        // Member Limits
+        maxNeedsPerMonth: plan.limits?.maxNeedsPerMonth ?? 3,
+        maxApplicationsPerNeed: plan.limits?.maxApplicationsPerNeed ?? 5,
         directWorkerContact: plan.limits?.directWorkerContact ?? false,
+        featuredNeed: plan.limits?.featuredNeed ?? false,
         isActive: plan.isActive ?? true,
       });
     } else {
@@ -77,15 +83,16 @@ const PlanManagementPage = () => {
         price: 0,
         durationDays: 30,
         features: "",
-        needsPerMonth: -1,
-        templatesAllowed: 0,
+        maxAppliesPerMonth: 0,
         tatkalEnabled: false,
+        templatesAllowed: 0,
         priorityListing: false,
         verifiedBadge: false,
-        featuredInTatkal: false,
-        analyticsEnabled: false,
-        whatsappLeads: false,
+        canViewDirectContact: false,
+        maxNeedsPerMonth: 3,
+        maxApplicationsPerNeed: 5,
         directWorkerContact: false,
+        featuredNeed: false,
         isActive: true,
       });
     }
@@ -108,15 +115,18 @@ const PlanManagementPage = () => {
         durationDays: Number(formData.durationDays),
         features: formData.features.split(",").map(f => f.trim()).filter(Boolean),
         limits: {
-          needsPerMonth: Number(formData.needsPerMonth),
-          templatesAllowed: Number(formData.templatesAllowed),
+          // Worker
+          maxAppliesPerMonth: Number(formData.maxAppliesPerMonth),
           tatkalEnabled: formData.tatkalEnabled,
+          templatesAllowed: Number(formData.templatesAllowed),
           priorityListing: formData.priorityListing,
           verifiedBadge: formData.verifiedBadge,
-          featuredInTatkal: formData.featuredInTatkal,
-          analyticsEnabled: formData.analyticsEnabled,
-          whatsappLeads: formData.whatsappLeads,
+          canViewDirectContact: formData.canViewDirectContact,
+          // Member
+          maxNeedsPerMonth: Number(formData.maxNeedsPerMonth),
+          maxApplicationsPerNeed: Number(formData.maxApplicationsPerNeed),
           directWorkerContact: formData.directWorkerContact,
+          featuredNeed: formData.featuredNeed,
         },
         isActive: formData.isActive,
       };
@@ -302,27 +312,52 @@ const PlanManagementPage = () => {
                     onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Needs Per Month Limit (-1 for unlim)</label>
-                  <input
-                    type="number"
-                    required
-                    className={`w-full p-2 rounded border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
-                    value={formData.needsPerMonth}
-                    onChange={(e) => setFormData({ ...formData, needsPerMonth: e.target.value })}
-                  />
-                </div>
-                {formData.userType === "society service" && (
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Templates Allowed (-1 for unlim)</label>
-                    <input
-                      type="number"
-                      required
-                      className={`w-full p-2 rounded border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
-                      value={formData.templatesAllowed}
-                      onChange={(e) => setFormData({ ...formData, templatesAllowed: e.target.value })}
-                    />
-                  </div>
+                {formData.userType === "society member" ? (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Max Needs/Month (-1 = unlim)</label>
+                      <input
+                        type="number"
+                        required
+                        className={`w-full p-2 rounded border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
+                        value={formData.maxNeedsPerMonth}
+                        onChange={(e) => setFormData({ ...formData, maxNeedsPerMonth: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Max Applications per Need</label>
+                      <input
+                        type="number"
+                        required
+                        className={`w-full p-2 rounded border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
+                        value={formData.maxApplicationsPerNeed}
+                        onChange={(e) => setFormData({ ...formData, maxApplicationsPerNeed: e.target.value })}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Max Applies/Month (0=none, -1=unlim)</label>
+                      <input
+                        type="number"
+                        required
+                        className={`w-full p-2 rounded border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
+                        value={formData.maxAppliesPerMonth}
+                        onChange={(e) => setFormData({ ...formData, maxAppliesPerMonth: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Templates Allowed (-1 = unlim)</label>
+                      <input
+                        type="number"
+                        required
+                        className={`w-full p-2 rounded border ${isDarkMode ? "bg-gray-700 border-gray-600" : "bg-gray-50 border-gray-300"}`}
+                        value={formData.templatesAllowed}
+                        onChange={(e) => setFormData({ ...formData, templatesAllowed: e.target.value })}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
               
@@ -356,23 +391,21 @@ const PlanManagementPage = () => {
                       <span>Verified Badge</span>
                     </label>
                     <label className="flex items-center space-x-2">
-                      <input type="checkbox" checked={formData.featuredInTatkal} onChange={(e) => setFormData({ ...formData, featuredInTatkal: e.target.checked })} />
-                      <span>Featured In Tatkal</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" checked={formData.analyticsEnabled} onChange={(e) => setFormData({ ...formData, analyticsEnabled: e.target.checked })} />
-                      <span>Analytics Enabled</span>
-                    </label>
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" checked={formData.whatsappLeads} onChange={(e) => setFormData({ ...formData, whatsappLeads: e.target.checked })} />
-                      <span>Whatsapp Leads</span>
+                      <input type="checkbox" checked={formData.canViewDirectContact} onChange={(e) => setFormData({ ...formData, canViewDirectContact: e.target.checked })} />
+                      <span>View Direct Contact</span>
                     </label>
                   </>
                 ) : (
-                  <label className="flex items-center space-x-2">
-                    <input type="checkbox" checked={formData.directWorkerContact} onChange={(e) => setFormData({ ...formData, directWorkerContact: e.target.checked })} />
-                    <span>Direct Worker Contact</span>
-                  </label>
+                  <>
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox" checked={formData.directWorkerContact} onChange={(e) => setFormData({ ...formData, directWorkerContact: e.target.checked })} />
+                      <span>Direct Worker Contact</span>
+                    </label>
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox" checked={formData.featuredNeed} onChange={(e) => setFormData({ ...formData, featuredNeed: e.target.checked })} />
+                      <span>Featured Need</span>
+                    </label>
+                  </>
                 )}
               </div>
 

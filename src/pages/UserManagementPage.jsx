@@ -16,6 +16,7 @@ import {
   FaClock,
   FaMapMarkerAlt,
   FaImage,
+  FaWhatsapp,
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import {
@@ -486,6 +487,18 @@ export default function UserManagementPage() {
     }
   };
 
+
+
+  const handleRenewalClick = (user) => {
+    const phone = user.whatsappNumber || user.mobileNumber;
+    if (!phone) {
+      toast.error("No phone number available for this user");
+      return;
+    }
+    const message = `Hello ${user.fullName},%0A%0AYour subscription plan is expiring soon or needs renewal. Please renew your plan to continue using our services.%0A%0AThank you!`;
+    window.open(`https://wa.me/91${phone}?text=${message}`, "_blank");
+  };
+
   // ======= UI STATES =======
   if (loading) {
     return (
@@ -708,6 +721,7 @@ export default function UserManagementPage() {
                   "Email",
                   "Role",
                   "Service Category",
+                  "Active Plan",
                   "Tatkal",
                   "Blocked",
                   "Created",
@@ -777,6 +791,12 @@ export default function UserManagementPage() {
                     style={{ color: themeColors.text }}
                   >
                     {(typeof u.serviceCategory === 'object' ? u.serviceCategory?.name : u.serviceCategory) || "-"}
+                  </td>
+                  <td
+                    className="px-4 py-2 text-xs capitalize font-semibold"
+                    style={{ color: themeColors.primary }}
+                  >
+                    {u.activePlan || "free"}
                   </td>
                   <td className="px-4 py-2 text-xs">
                     <span
@@ -878,6 +898,20 @@ export default function UserManagementPage() {
                       >
                         <FaEdit className="text-[11px]" />
                         <span className="text-[11px]">Edit</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRenewalClick(u)}
+                        className="px-2 py-1 rounded-md border inline-flex items-center gap-1"
+                        style={{
+                          borderColor: themeColors.primary,
+                          backgroundColor: themeColors.background,
+                          color: themeColors.primary,
+                        }}
+                      >
+                        <FaWhatsapp className="text-[11px]" />
+                        <span className="text-[11px]">Renew</span>
                       </button>
 
                       <button
