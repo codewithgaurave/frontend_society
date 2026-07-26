@@ -809,7 +809,7 @@ export default function UserManagementPage() {
                     {u.activePlan || "free"}
                   </td>
                   <td className="px-4 py-2 text-xs" style={getRenewalStyle(u.activePlan, u.planExpiryDate, themeColors.text)}>
-                    {(u.activePlan && u.activePlan !== "free" && u.planExpiryDate) ? fmtDate(u.planExpiryDate) : "-"}
+                    {u.planExpiryDate ? fmtDate(u.planExpiryDate) : "-"}
                   </td>
                   <td className="px-4 py-2 text-xs">
                     <span
@@ -853,7 +853,7 @@ export default function UserManagementPage() {
                     className="px-4 py-2 text-[11px]"
                     style={{ color: themeColors.text }}
                   >
-                    {fmtDateTime(u.createdAtIST || u.createdAt)}
+                    {fmtDateTime(u.createdAt || u.createdAtIST)}
                   </td>
                   <td className="px-4 py-2 text-xs">
                     <div className="flex flex-wrap items-center gap-2">
