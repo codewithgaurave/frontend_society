@@ -29,9 +29,15 @@ export const updateServiceCategory = async (categoryId, payload) => {
   return data;
 };
 
-// ADMIN ONLY: Delete category by ID
-// DELETE /api/service-category/:categoryId
-export const deleteServiceCategory = async (categoryId) => {
+// ADMIN ONLY: Upload/Update category icon
+// PATCH /api/service-category/:id/icon
+export const updateServiceCategoryIconApi = async (categoryId, formData) => {
+  const { data } = await http.patch(`/api/service-category/${categoryId}/icon`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+};
+
   const { data } = await http.delete(`/api/service-category/${categoryId}`);
   // Expected: { message }
   return data;

@@ -39,9 +39,15 @@ export const updateMainCategory = async (mainCategoryId, payload) => {
   return data;
 };
 
-// ADMIN: Delete (soft delete) main category by ID
-// DELETE /api/main-categories/:mainCategoryId
-export const deleteMainCategory = async (mainCategoryId) => {
+// ADMIN: Upload/Update main category icon
+// PATCH /api/main-categories/:id/icon
+export const updateMainCategoryIconApi = async (mainCategoryId, formData) => {
+  const { data } = await http.patch(`/api/main-categories/${mainCategoryId}/icon`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
+  return data;
+};
+
   const { data } = await http.delete(`/api/main-categories/${mainCategoryId}`);
   // Expected: { message, mainCategory }
   return data;

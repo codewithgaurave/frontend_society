@@ -9,6 +9,8 @@ import {
   FaSyncAlt,
   FaRegClock,
   FaObjectGroup,
+  FaImage,
+  FaUpload,
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { listServiceCategories } from "../apis/serviceCategory";
@@ -17,6 +19,7 @@ import {
   createMainCategory,
   updateMainCategory,
   deleteMainCategory,
+  updateMainCategoryIconApi,
 } from "../apis/mainCategory";
 
 const fmtDateTime = (value) => {
@@ -52,6 +55,7 @@ export default function MainCategoryPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingIconId, setUploadingIconId] = useState(null);
 
   const [search, setSearch] = useState("");
 
@@ -238,6 +242,29 @@ export default function MainCategoryPage() {
       description: category.description || "",
       serviceCategoryIds,
     });
+  };
+
+  const handleIconUpload = async (category, file) => {
+    if (!file) return;
+    try {
+      setUploadingIconId(category.id);
+      const formData = new FormData();
+      formData.append("icon", file);
+      const res = await updateMainCategoryIconApi(category.id, formData);
+      const updated = res?.mainCategory || res?.data || res;
+      if (updated) {
+        setMainCategories((prev) =>
+          (prev || []).map((c) =>
+            c.id === category.id ? { ...c, icon: updated.icon } : c
+          )
+        );
+      }
+      toast.success("Icon updated successfully");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to upload icon");
+    } finally {
+      setUploadingIconId(null);
+    }
   };
 
   const handleDeleteClick = async (category) => {
@@ -621,6 +648,7 @@ export default function MainCategoryPage() {
                   }}
                 >
                   {[
+                    "Icon",
                     "Name",
                     "Description",
                     "Service Categories",
@@ -645,6 +673,37 @@ export default function MainCategoryPage() {
               >
                 {filteredMainCategories.map((c) => (
                   <tr key={c.id}>
+                    <td className="px-4 py-2">
+                      <div className="flex flex-col items-center gap-1">
+                        {c.icon ? (
+                          <img src={c.icon} alt={c.name} className="w-10 h-10 rounded-lg object-cover border" style={{ borderColor: themeColors.border }} />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: themeColors.background, border: `1px dashed ${themeColors.border}` }}>
+                            <FaImage className="text-gray-400 text-sm" />
+                          </div>
+                        )}
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleIconUpload(c, e.target.files[0])}
+                            disabled={uploadingIconId === c.id}
+                          />
+                          <span
+                            className="text-[10px] px-1.5 py-0.5 rounded border inline-flex items-center gap-1"
+                            style={{ borderColor: themeColors.border, color: themeColors.text, backgroundColor: themeColors.background }}
+                          >
+                            {uploadingIconId === c.id ? (
+                              <FaRegClock className="animate-spin text-[9px]" />
+                            ) : (
+                              <FaUpload className="text-[9px]" />
+                            )}
+                            {c.icon ? "Change" : "Upload"}
+                          </span>
+                        </label>
+                      </div>
+                    </td>
                     <td
                       className="px-4 py-2 font-medium"
                       style={{ color: themeColors.text }}
@@ -721,7 +780,7 @@ export default function MainCategoryPage() {
                 {filteredMainCategories.length === 0 && (
                   <tr>
                     <td
-                      colSpan={7}
+                      colSpan={8}
                       className="px-4 py-8 text-center text-sm"
                       style={{ color: themeColors.text }}
                     >

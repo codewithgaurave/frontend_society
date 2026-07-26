@@ -9,6 +9,8 @@ import {
   FaSearch,
   FaSyncAlt,
   FaRegClock,
+  FaImage,
+  FaUpload,
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import {
@@ -16,6 +18,7 @@ import {
   createServiceCategory,
   updateServiceCategory,
   deleteServiceCategory,
+  updateServiceCategoryIconApi,
 } from "../apis/serviceCategory";
 
 const fmtDateTime = (d) => {
@@ -38,6 +41,7 @@ export default function ServiceCategoryPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [uploadingIconId, setUploadingIconId] = useState(null);
 
   const [search, setSearch] = useState("");
 
@@ -174,6 +178,28 @@ export default function ServiceCategoryPage() {
       name: category.name || "",
       description: category.description || "",
     });
+  };
+
+  const handleIconUpload = async (category, file) => {
+    if (!file) return;
+    const categoryId = category._id || category.id;
+    try {
+      setUploadingIconId(categoryId);
+      const formData = new FormData();
+      formData.append("icon", file);
+      const res = await updateServiceCategoryIconApi(categoryId, formData);
+      const updated = res?.category || res?.data || res;
+      if (updated) {
+        setCategories((prev) =>
+          (prev || []).map((c) => ((c._id || c.id) === categoryId ? { ...c, icon: updated.icon } : c))
+        );
+      }
+      toast.success("Icon updated successfully");
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to upload icon");
+    } finally {
+      setUploadingIconId(null);
+    }
   };
 
   const handleDeleteClick = async (category) => {
@@ -428,7 +454,7 @@ export default function ServiceCategoryPage() {
                     backgroundColor: themeColors.background + "30",
                   }}
                 >
-                  {["Name", "Description", "Created", "Updated", "Actions"].map(
+                  {["Icon", "Name", "Description", "Created", "Updated", "Actions"].map(
                     (head) => (
                       <th
                         key={head}
@@ -447,6 +473,37 @@ export default function ServiceCategoryPage() {
               >
                 {paginatedCategories.map((c) => (
                   <tr key={c._id || c.id}>
+                    <td className="px-4 py-2">
+                      <div className="flex flex-col items-center gap-1">
+                        {c.icon ? (
+                          <img src={c.icon} alt={c.name} className="w-10 h-10 rounded-lg object-cover border" style={{ borderColor: themeColors.border }} />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: themeColors.background, border: `1px dashed ${themeColors.border}` }}>
+                            <FaImage className="text-gray-400 text-sm" />
+                          </div>
+                        )}
+                        <label className="cursor-pointer">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={(e) => handleIconUpload(c, e.target.files[0])}
+                            disabled={uploadingIconId === (c._id || c.id)}
+                          />
+                          <span
+                            className="text-[10px] px-1.5 py-0.5 rounded border inline-flex items-center gap-1"
+                            style={{ borderColor: themeColors.border, color: themeColors.text, backgroundColor: themeColors.background }}
+                          >
+                            {uploadingIconId === (c._id || c.id) ? (
+                              <FaRegClock className="animate-spin text-[9px]" />
+                            ) : (
+                              <FaUpload className="text-[9px]" />
+                            )}
+                            {c.icon ? "Change" : "Upload"}
+                          </span>
+                        </label>
+                      </div>
+                    </td>
                     <td
                       className="px-4 py-2 font-medium"
                       style={{ color: themeColors.text }}
@@ -507,7 +564,7 @@ export default function ServiceCategoryPage() {
                 {filteredCategories.length === 0 && (
                   <tr>
                     <td
-                      colSpan={5}
+                      colSpan={6}
                       className="px-4 py-8 text-center text-sm"
                       style={{ color: themeColors.text }}
                     >
