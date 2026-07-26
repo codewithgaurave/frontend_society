@@ -223,6 +223,7 @@ const EmployeeWiseUsersPage = () => {
                   <th className="py-4 px-6">Reg ID</th>
                   <th className="py-4 px-6">Role</th>
                   <th className="py-4 px-6">Contact / Mobile</th>
+                  <th className="py-4 px-6">Active Plan</th>
                   <th className="py-4 px-6">Address</th>
                   <th className="py-4 px-6">Onboarding Date</th>
                 </tr>
@@ -264,6 +265,11 @@ const EmployeeWiseUsersPage = () => {
                       <div className="flex items-center gap-1.5 text-gray-700 font-medium">
                         <FaPhoneAlt className="text-xs text-gray-400" /> {user.mobileNumber}
                       </div>
+                    </td>
+                    <td className="py-4 px-6">
+                      <span className="font-semibold text-purple-700 capitalize text-sm">
+                        {user.activePlan || "free"}
+                      </span>
                     </td>
                     <td className="py-4 px-6 text-xs text-gray-600 max-w-xs truncate">
                       <div className="flex items-start gap-1">
