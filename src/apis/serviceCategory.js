@@ -38,6 +38,9 @@ export const updateServiceCategoryIconApi = async (categoryId, formData) => {
   return data;
 };
 
+// ADMIN ONLY: Delete category by ID
+// DELETE /api/service-category/:categoryId
+export const deleteServiceCategory = async (categoryId) => {
   const { data } = await http.delete(`/api/service-category/${categoryId}`);
   // Expected: { message }
   return data;

@@ -48,6 +48,9 @@ export const updateMainCategoryIconApi = async (mainCategoryId, formData) => {
   return data;
 };
 
+// ADMIN: Delete (soft delete) main category by ID
+// DELETE /api/main-categories/:mainCategoryId
+export const deleteMainCategory = async (mainCategoryId) => {
   const { data } = await http.delete(`/api/main-categories/${mainCategoryId}`);
   // Expected: { message, mainCategory }
   return data;
