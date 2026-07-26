@@ -53,6 +53,15 @@ const fmtDate = (d) => {
   }
 };
 
+const getRenewalStyle = (plan, expiryDate, defaultColor) => {
+  if (!plan || plan === "free" || !expiryDate) return { color: defaultColor };
+  const diffTime = new Date(expiryDate) - new Date();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return { color: "#dc2626", fontWeight: "bold" };
+  if (diffDays <= 7) return { color: "#ea580c", fontWeight: "bold" };
+  return { color: defaultColor };
+};
+
 const emptyForm = {
   fullName: "",
   mobileNumber: "",
@@ -722,6 +731,7 @@ export default function UserManagementPage() {
                   "Role",
                   "Service Category",
                   "Active Plan",
+                  "Renewal Date",
                   "Tatkal",
                   "Blocked",
                   "Created",
@@ -797,6 +807,9 @@ export default function UserManagementPage() {
                     style={{ color: themeColors.primary }}
                   >
                     {u.activePlan || "free"}
+                  </td>
+                  <td className="px-4 py-2 text-xs" style={getRenewalStyle(u.activePlan, u.planExpiryDate, themeColors.text)}>
+                    {(u.activePlan && u.activePlan !== "free" && u.planExpiryDate) ? fmtDate(u.planExpiryDate) : "-"}
                   </td>
                   <td className="px-4 py-2 text-xs">
                     <span
