@@ -17,6 +17,7 @@ import {
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import { listUsers, updateUserBlockStatus } from "../apis/users";
+import { toggleUserAvailabilityApi } from "../apis/availability";
 
 // Removed dummy data arrays
 
@@ -43,6 +44,25 @@ const fmtDateTime = (d) => {
   } catch {
     return "-";
   }
+};
+
+const fmtDate = (d) => {
+  if (!d) return "-";
+  try {
+    const dt = new Date(d);
+    return dt.toLocaleDateString();
+  } catch {
+    return "-";
+  }
+};
+
+const getRenewalStyle = (plan, expiryDate, defaultColor) => {
+  if (!plan || plan === "free" || !expiryDate) return { color: defaultColor };
+  const diffTime = new Date(expiryDate) - new Date();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) return { color: "#dc2626", fontWeight: "bold" };
+  if (diffDays <= 7) return { color: "#ea580c", fontWeight: "bold" };
+  return { color: defaultColor };
 };
 
 function getStatusChip(status, themeColors, type = "member") {
@@ -121,6 +141,8 @@ export default function SocietyDashboard() {
         .map((u) => ({
           id: u._id,
           flatNumber: u.address || "-", // Address is used as flat number for now
+          address: u.address || "-",
+          pincode: u.pincode || "-",
           name: u.fullName,
           phone: u.mobileNumber,
           email: u.email,
@@ -128,6 +150,8 @@ export default function SocietyDashboard() {
           familyCount: "-", 
           vehicleCount: "-",
           createdAt: u.createdAt,
+          activePlan: u.activePlan,
+          planExpiryDate: u.planExpiryDate,
         }));
         
       const parsedWorkers = allUsers
@@ -140,8 +164,10 @@ export default function SocietyDashboard() {
           employeeCode: u.registrationID,
           phone: u.mobileNumber,
           shift: "-",
-          status: u.isBlocked ? "BLOCKED" : "ON_DUTY", // Or whatever logic you prefer
+          status: u.isBlocked ? "BLOCKED" : (u.isAvailable ? "ON_DUTY" : "OFF_DUTY"), // Or whatever logic you prefer
           lastCheckInAt: u.updatedAt,
+          address: u.address || "-",
+          pincode: u.pincode || "-",
         }));
 
       setMembers(parsedMembers);
@@ -334,6 +360,11 @@ export default function SocietyDashboard() {
     try {
       const isBlocked = status === "BLOCKED";
       await updateUserBlockStatus(workerId, isBlocked);
+
+      if (!isBlocked) {
+        const isAvailable = status === "ON_DUTY";
+        await toggleUserAvailabilityApi(workerId, isAvailable);
+      }
 
     setWorkers((prev) =>
       (prev || []).map((w) =>
@@ -651,11 +682,12 @@ export default function SocietyDashboard() {
                       }}
                     >
                       {[
-                        "Flat No.",
+                        "Address",
                         "Member Name",
                         "Contact",
                         "Status",
                         "Family / Vehicles",
+                        "Renewal Date",
                         "Joined On",
                         "Actions",
                       ].map((head) => (
@@ -678,10 +710,11 @@ export default function SocietyDashboard() {
                       return (
                         <tr key={m.id}>
                           <td
-                            className="px-4 py-2 font-mono"
+                            className="px-4 py-2 text-xs"
                             style={{ color: themeColors.text }}
                           >
-                            {m.flatNumber || "-"}
+                            <div className="font-medium">{m.address}</div>
+                            <div className="text-[10px] opacity-70 mt-0.5">Pincode: {m.pincode}</div>
                           </td>
                           <td className="px-4 py-2">
                             <div
@@ -741,6 +774,12 @@ export default function SocietyDashboard() {
                           </td>
                           <td
                             className="px-4 py-2 text-xs"
+                            style={getRenewalStyle(m.activePlan, m.planExpiryDate, themeColors.text)}
+                          >
+                            {m.planExpiryDate ? fmtDate(m.planExpiryDate) : "-"}
+                          </td>
+                          <td
+                            className="px-4 py-2 text-xs"
                             style={{ color: themeColors.text }}
                           >
                             {fmtDateTime(m.createdAt)}
@@ -786,7 +825,7 @@ export default function SocietyDashboard() {
                     {paginatedMembers.length === 0 && (
                       <tr>
                         <td
-                          colSpan={7}
+                          colSpan={8}
                           className="px-4 py-8 text-center text-sm"
                           style={{ color: themeColors.text }}
                         >
@@ -888,6 +927,7 @@ export default function SocietyDashboard() {
                         "Name",
                         "Role / Code",
                         "Contact",
+                        "Address",
                         "Shift",
                         "Status",
                         "Last Check-in",
@@ -948,6 +988,13 @@ export default function SocietyDashboard() {
                               <FaPhoneAlt className="text-[10px]" />
                               {w.phone || "-"}
                             </div>
+                          </td>
+                          <td
+                            className="px-4 py-2 text-xs"
+                            style={{ color: themeColors.text }}
+                          >
+                            <div className="font-medium max-w-[200px] truncate" title={w.address}>{w.address}</div>
+                            <div className="text-[10px] opacity-70 mt-0.5">Pincode: {w.pincode}</div>
                           </td>
                           <td
                             className="px-4 py-2 text-xs"
@@ -1014,7 +1061,7 @@ export default function SocietyDashboard() {
                     {paginatedWorkers.length === 0 && (
                       <tr>
                         <td
-                          colSpan={7}
+                          colSpan={8}
                           className="px-4 py-8 text-center text-sm"
                           style={{ color: themeColors.text }}
                         >
