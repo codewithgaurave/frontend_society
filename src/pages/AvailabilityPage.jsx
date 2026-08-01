@@ -422,7 +422,7 @@ export default function AvailabilityPage() {
                         color: themeColors.text,
                       }}
                     >
-                      Category: {user.serviceCategory}
+                      Category: {typeof user.serviceCategory === 'object' ? user.serviceCategory?.name : user.serviceCategory}
                     </span>
                   )}
                 </div>

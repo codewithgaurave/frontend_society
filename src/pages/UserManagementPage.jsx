@@ -1632,7 +1632,7 @@ export default function UserManagementPage() {
                                   border: `1px solid ${themeColors.border}`,
                                 }}
                               >
-                                Service: {u.serviceCategory}
+                                Service: {typeof u.serviceCategory === 'object' ? u.serviceCategory?.name : u.serviceCategory}
                               </span>
                             )}
                             {u.experience && (
@@ -1949,7 +1949,7 @@ export default function UserManagementPage() {
                             )}
                             <div className="flex justify-between items-center mt-1 text-[10px] opacity-80">
                               {tpl.serviceCategory && (
-                                <span>{tpl.serviceCategory}</span>
+                                <span>{typeof tpl.serviceCategory === 'object' ? tpl.serviceCategory?.name : tpl.serviceCategory}</span>
                               )}
                               <span>
                                 {fmtDate(tpl.createdAtIST || tpl.createdAt)}
