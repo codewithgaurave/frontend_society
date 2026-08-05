@@ -49,13 +49,14 @@ export default function ServiceCategoryPage() {
   const [form, setForm] = useState({
     name: "",
     description: "",
+    isFree: false,
   });
 
   const [mode, setMode] = useState("create"); // "create" | "edit"
   const [editingId, setEditingId] = useState(null);
 
   const resetForm = () => {
-    setForm({ name: "", description: "" });
+    setForm({ name: "", description: "", isFree: false });
     setMode("create");
     setEditingId(null);
   };
@@ -135,6 +136,7 @@ export default function ServiceCategoryPage() {
         const res = await createServiceCategory({
           name: form.name.trim(),
           description: form.description.trim(),
+          isFree: form.isFree,
         });
 
         const newCategory = res?.category || res?.data || res;
@@ -148,6 +150,7 @@ export default function ServiceCategoryPage() {
         const res = await updateServiceCategory(editingId, {
           name: form.name.trim(),
           description: form.description.trim(),
+          isFree: form.isFree,
         });
 
         const updated = res?.category || res?.data || res;
@@ -177,6 +180,7 @@ export default function ServiceCategoryPage() {
     setForm({
       name: category.name || "",
       description: category.description || "",
+      isFree: category.isFree || false,
     });
   };
 
@@ -386,6 +390,20 @@ export default function ServiceCategoryPage() {
               />
             </div>
 
+            <div className="flex items-center gap-2 pt-1 pb-2">
+              <input
+                type="checkbox"
+                id="isFree"
+                name="isFree"
+                checked={form.isFree}
+                onChange={(e) => setForm((prev) => ({ ...prev, isFree: e.target.checked }))}
+                className="rounded text-blue-500 cursor-pointer h-4 w-4"
+              />
+              <label htmlFor="isFree" className="text-xs font-semibold select-none cursor-pointer" style={{ color: themeColors.text }}>
+                Free Plan (Contacts visible without paid subscription)
+              </label>
+            </div>
+
             <button
               type="submit"
               disabled={saving}
@@ -454,7 +472,7 @@ export default function ServiceCategoryPage() {
                     backgroundColor: themeColors.background + "30",
                   }}
                 >
-                  {["Icon", "Name", "Description", "Created", "Updated", "Actions"].map(
+                  {["Icon", "Name", "Description", "Free Plan", "Created", "Updated", "Actions"].map(
                     (head) => (
                       <th
                         key={head}
@@ -515,6 +533,38 @@ export default function ServiceCategoryPage() {
                       style={{ color: themeColors.text }}
                     >
                       {c.description || "-"}
+                    </td>
+                    <td className="px-4 py-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          try {
+                            const newStatus = !c.isFree;
+                            const res = await updateServiceCategory(c._id || c.id, {
+                              name: c.name,
+                              description: c.description,
+                              isFree: newStatus,
+                            });
+                            const updated = res?.category || res?.data || res;
+                            if (updated) {
+                              setCategories((prev) =>
+                                prev.map((item) => ((item._id || item.id) === (c._id || c.id) ? updated : item))
+                              );
+                            }
+                            toast.success(`Category "${c.name}" is now ${newStatus ? "Free" : "Paid"}`);
+                          } catch (err) {
+                            toast.error("Failed to toggle category type");
+                          }
+                        }}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors duration-150 border cursor-pointer"
+                        style={{
+                          backgroundColor: c.isFree ? themeColors.success + "15" : themeColors.border,
+                          color: c.isFree ? themeColors.success : themeColors.text,
+                          borderColor: c.isFree ? themeColors.success + "40" : themeColors.border,
+                        }}
+                      >
+                        {c.isFree ? "Free" : "Paid"}
+                      </button>
                     </td>
                     <td
                       className="px-4 py-2 text-xs"

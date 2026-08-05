@@ -12,6 +12,8 @@ import {
   FaListAlt, // For Plans
   FaUserTie, // For Employees
   FaUserCheck, // For Employee Onboardings
+  FaThList,
+  FaCommentAlt,
 } from "react-icons/fa";
 
 const SocietyDashboard = lazy(() => import("../pages/SocietyDashboard"));
@@ -51,6 +53,14 @@ const SubscriptionManagementPage = lazy(() =>
 
 const PlanManagementPage = lazy(() =>
   import("../pages/PlanManagementPage")
+);
+
+const CommunityCategoryPage = lazy(() =>
+  import("../pages/CommunityCategoryPage")
+);
+
+const CommunityPostPage = lazy(() =>
+  import("../pages/CommunityPostPage")
 );
 
 const routes = [
@@ -133,6 +143,18 @@ const routes = [
     component: PlanManagementPage,
     name: "Subscription Plans",
     icon: FaListAlt,
+  },
+  {
+    path: "/community-categories",
+    component: CommunityCategoryPage,
+    name: "Community Categories",
+    icon: FaThList,
+  },
+  {
+    path: "/community-posts",
+    component: CommunityPostPage,
+    name: "Community Posts",
+    icon: FaCommentAlt,
   },
 ];
 
