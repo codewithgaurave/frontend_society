@@ -13,14 +13,17 @@ import {
   FaHeart,
   FaRegComment,
   FaChevronLeft,
-  FaChevronRight
+  FaChevronRight,
+  FaClock
 } from "react-icons/fa";
 import { useTheme } from "../context/ThemeContext";
 import {
   listAdminPosts,
   togglePostActiveApi,
   deletePostApi,
-  listAdminCategories
+  listAdminCategories,
+  getCommunitySettingsApi,
+  updateCommunitySettingsApi
 } from "../apis/community";
 import { listColonies } from "../apis/colonies";
 
@@ -46,11 +49,16 @@ export default function CommunityPostPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Auto delete duration setting (hours)
+  const [autoDeleteHours, setAutoDeleteHours] = useState(48);
+  const [settingInput, setSettingInput] = useState(48);
+  const [savingSettings, setSavingSettings] = useState(false);
+
   // Filters
   const [search, setSearch] = useState("");
   const [colonyFilter, setColonyFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all"); // "all" | "active" | "inactive"
+  const [statusFilter, setStatusFilter] = useState("all"); // "all" | "active" | "inactive" | "expired" | "unexpired"
 
   // Pagination from backend
   const [currentPage, setCurrentPage] = useState(1);
@@ -66,13 +74,20 @@ export default function CommunityPostPage() {
       setLoading(true);
       setError("");
 
-      // Fetch categories & colonies in parallel
-      const [catsRes, colsRes] = await Promise.all([
+      // Fetch categories, colonies & auto-delete settings in parallel
+      const [catsRes, colsRes, settingsRes] = await Promise.all([
         listAdminCategories(),
-        listColonies()
+        listColonies(),
+        getCommunitySettingsApi().catch(() => ({ communityAutoDeleteHours: 48 }))
       ]);
       setCategories(catsRes || []);
       setColonies(colsRes || []);
+      
+      const hrs = typeof settingsRes?.communityAutoDeleteHours === "number" 
+        ? settingsRes.communityAutoDeleteHours 
+        : 48;
+      setAutoDeleteHours(hrs);
+      setSettingInput(hrs);
 
       // Fetch posts for page
       await fetchPosts(1);
@@ -96,15 +111,45 @@ export default function CommunityPostPage() {
       if (search.trim()) params.search = search.trim();
       if (colonyFilter !== "all") params.colonyId = colonyFilter;
       if (categoryFilter !== "all") params.category = categoryFilter;
-      if (statusFilter !== "all") params.isActive = statusFilter === "active";
+      
+      if (statusFilter === "active") params.isActive = true;
+      else if (statusFilter === "inactive") params.isActive = false;
+      else if (statusFilter === "expired") params.status = "expired";
+      else if (statusFilter === "unexpired") params.status = "unexpired";
 
       const res = await listAdminPosts(params);
       setPosts(res?.posts || []);
       setTotalPages(res?.pages || 1);
       setCurrentPage(res?.page || 1);
       setTotalPosts(res?.total || 0);
+
+      if (typeof res?.communityAutoDeleteHours === "number") {
+        setAutoDeleteHours(res.communityAutoDeleteHours);
+      }
     } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to fetch posts");
+    }
+  };
+
+  const handleSaveSettings = async (hoursToSave) => {
+    const val = hoursToSave !== undefined ? hoursToSave : Number(settingInput);
+    if (isNaN(val) || val < 0) {
+      toast.error("Please enter a valid non-negative number of hours");
+      return;
+    }
+
+    try {
+      setSavingSettings(true);
+      const res = await updateCommunitySettingsApi({ communityAutoDeleteHours: val });
+      const updatedHrs = res?.communityAutoDeleteHours ?? val;
+      setAutoDeleteHours(updatedHrs);
+      setSettingInput(updatedHrs);
+      toast.success(res?.message || `Auto-delete duration set to ${updatedHrs} hours`);
+      fetchPosts(1);
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Failed to update auto-delete settings");
+    } finally {
+      setSavingSettings(false);
     }
   };
 
@@ -148,7 +193,7 @@ export default function CommunityPostPage() {
     const postId = post._id || post.id;
     try {
       const res = await deletePostApi(postId);
-      toast.success(res?.message || "Post deleted successfully");
+      toast.success(res?.message || "Post deleted permanently");
       setPosts((prev) => prev.filter((p) => (p._id || p.id) !== postId));
       
       if (viewPost && (viewPost._id || viewPost.id) === postId) {
@@ -193,12 +238,106 @@ export default function CommunityPostPage() {
 
         <button
           onClick={loadData}
-          className="self-start inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold border"
+          className="self-start inline-flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold border hover:opacity-80 transition"
           style={{ borderColor: themeColors.border, backgroundColor: themeColors.surface, color: themeColors.text }}
         >
           <FaSyncAlt className="text-xs" />
           Refresh
         </button>
+      </div>
+
+      {/* Auto-Delete Settings Card (Admin Controls) */}
+      <div 
+        className="rounded-2xl border shadow-sm p-4 md:p-5 space-y-3"
+        style={{ backgroundColor: themeColors.surface, borderColor: themeColors.border }}
+      >
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b pb-3" style={{ borderColor: themeColors.border }}>
+          <div className="flex items-center gap-2.5">
+            <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-600 text-lg">
+              <FaClock />
+            </div>
+            <div>
+              <h2 className="text-base font-bold flex items-center gap-2" style={{ color: themeColors.text }}>
+                Auto-Delete Posts Duration
+                <span className="px-2 py-0.5 text-xs rounded-full font-bold bg-amber-500/15 text-amber-600 border border-amber-500/20">
+                  Currently: {autoDeleteHours === 0 ? "Off (Never)" : `${autoDeleteHours} Hours (${(autoDeleteHours / 24).toFixed(1)} Days)`}
+                </span>
+              </h2>
+              <p className="text-xs opacity-75 mt-0.5" style={{ color: themeColors.text }}>
+                Set duration after which posts automatically expire and hide from users in the mobile app. (Default: 48 hrs)
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Presets & Control Input */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+          {/* Quick Presets */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium opacity-70" style={{ color: themeColors.text }}>Presets:</span>
+            {[
+              { label: "24h (1 Day)", val: 24 },
+              { label: "48h (2 Days Default)", val: 48 },
+              { label: "72h (3 Days)", val: 72 },
+              { label: "168h (7 Days)", val: 168 },
+              { label: "Off (0h)", val: 0 }
+            ].map((preset) => (
+              <button
+                key={preset.val}
+                onClick={() => handleSaveSettings(preset.val)}
+                disabled={savingSettings}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition ${
+                  autoDeleteHours === preset.val 
+                    ? "bg-amber-500 text-white border-amber-500 shadow-sm" 
+                    : "hover:bg-gray-100 dark:hover:bg-gray-800"
+                }`}
+                style={autoDeleteHours !== preset.val ? { borderColor: themeColors.border, color: themeColors.text } : {}}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Custom Input & Adjustment */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center border rounded-lg overflow-hidden" style={{ borderColor: themeColors.border }}>
+              <button
+                type="button"
+                onClick={() => setSettingInput((prev) => Math.max(0, Number(prev) - 6))}
+                className="px-2.5 py-1 text-xs font-bold border-r hover:bg-gray-100 dark:hover:bg-gray-800"
+                style={{ borderColor: themeColors.border, color: themeColors.text }}
+              >
+                -6h
+              </button>
+              <input
+                type="number"
+                min="0"
+                value={settingInput}
+                onChange={(e) => setSettingInput(e.target.value)}
+                className="w-16 px-2 py-1 text-xs text-center font-bold focus:outline-none"
+                style={{ backgroundColor: themeColors.background, color: themeColors.text }}
+              />
+              <span className="text-xs font-semibold px-1 opacity-70" style={{ color: themeColors.text }}>hrs</span>
+              <button
+                type="button"
+                onClick={() => setSettingInput((prev) => Math.max(0, Number(prev) + 6))}
+                className="px-2.5 py-1 text-xs font-bold border-l hover:bg-gray-100 dark:hover:bg-gray-800"
+                style={{ borderColor: themeColors.border, color: themeColors.text }}
+              >
+                +6h
+              </button>
+            </div>
+
+            <button
+              onClick={() => handleSaveSettings()}
+              disabled={savingSettings}
+              className="px-3 py-1.5 text-xs font-bold rounded-lg text-white shadow-sm hover:opacity-90 transition disabled:opacity-50"
+              style={{ backgroundColor: themeColors.primary }}
+            >
+              {savingSettings ? "Saving..." : "Save Duration"}
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Filters Bar */}
@@ -273,6 +412,8 @@ export default function CommunityPostPage() {
               <option value="all">All Statuses</option>
               <option value="active">Active Only</option>
               <option value="inactive">Inactive / Hidden</option>
+              <option value="expired">Auto-Expired Only (&gt; {autoDeleteHours}h)</option>
+              <option value="unexpired">Unexpired Only (&le; {autoDeleteHours}h)</option>
             </select>
           </div>
         </div>
@@ -339,17 +480,24 @@ export default function CommunityPostPage() {
 
                     {/* Status */}
                     <td className="px-4 py-3 text-xs">
-                      <button
-                        onClick={() => handleToggleStatus(p)}
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors duration-150"
-                        style={{
-                          backgroundColor: p.isActive ? themeColors.success + "15" : themeColors.danger + "15",
-                          color: p.isActive ? themeColors.success : themeColors.danger
-                        }}
-                      >
-                        {p.isActive ? <FaCheck className="text-[8px]" /> : <FaTimes className="text-[8px]" />}
-                        {p.isActive ? "Active" : "Hidden"}
-                      </button>
+                      <div className="flex flex-col items-start gap-1">
+                        <button
+                          onClick={() => handleToggleStatus(p)}
+                          className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold transition-colors duration-150"
+                          style={{
+                            backgroundColor: p.isActive ? themeColors.success + "15" : themeColors.danger + "15",
+                            color: p.isActive ? themeColors.success : themeColors.danger
+                          }}
+                        >
+                          {p.isActive ? <FaCheck className="text-[8px]" /> : <FaTimes className="text-[8px]" />}
+                          {p.isActive ? "Active" : "Hidden"}
+                        </button>
+                        {p.isExpired && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-amber-500/15 text-amber-600 border border-amber-500/20">
+                            <FaClock className="text-[8px]" /> Expired (&gt;{autoDeleteHours}h)
+                          </span>
+                        )}
+                      </div>
                     </td>
 
                     {/* Actions */}

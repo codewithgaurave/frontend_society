@@ -51,3 +51,16 @@ export const deletePostApi = async (id) => {
   const { data } = await http.delete(`/api/community/admin/posts/${id}`);
   return data;
 };
+
+// GET /api/community/admin/settings
+export const getCommunitySettingsApi = async () => {
+  const { data } = await http.get("/api/community/admin/settings");
+  return data; // { communityAutoDeleteHours }
+};
+
+// PUT /api/community/admin/settings
+export const updateCommunitySettingsApi = async (settings) => {
+  const { data } = await http.put("/api/community/admin/settings", settings);
+  return data;
+};
+
